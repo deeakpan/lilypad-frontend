@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Hero from "@/components/Hero";
+import Hero from "@/components/hero";
 import Homepage from "@/components/Homepage";
 import DeployNFT from "@/components/DeployNFT"; // Correct import path for DeployNFT component
 
