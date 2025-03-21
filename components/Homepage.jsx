@@ -16,104 +16,80 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch NFT collections from Supabase
   useEffect(() => {
     const fetchCollections = async () => {
       const { data, error } = await supabase.from("nft_collections").select("*");
-
       if (error) {
         console.error("Error fetching NFTs:", error);
-      } else if (data.length === 0) {
-        console.warn("No NFTs found in Supabase.");
       } else {
-        console.log("Fetched collections:", data); // Debugging
-
         setCollections(data);
       }
       setLoading(false);
     };
-
     fetchCollections();
   }, []);
 
+  const filteredCollections = collections.filter(collection =>
+    collection.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="flex min-h-screen bg-dusty-green">
-      {/* Sidebar (No changes) */}
-      <aside className="w-64 bg-white p-6 border-r-2 border-black min-h-screen">
+    <div className="flex min-h-screen w-full bg-dusty-green">
+      {/* Sidebar */}
+      <aside className={`fixed top-0 left-0 h-full bg-white p-6 border-r-2 border-black transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-300 ease-in-out w-64 z-40 shadow-lg`}>
+        <button className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-md shadow-md" onClick={() => setSidebarOpen(false)}>✕</button>
         <h1 className="text-2xl font-bold mb-6">LilyPad</h1>
         <nav className="space-y-4">
           <a href="#" className="block text-lg font-semibold hover:text-green-500">Home</a>
-          <Link href="/DeployNFT">
-            <button className="block text-lg font-semibold hover:text-green-500">Create Collection</button>
-          </Link>
+          <Link href="/DeployNFT"><button className="block text-lg font-semibold hover:text-green-500">Create Collection</button></Link>
           <a href="#" className="block text-lg font-semibold hover:text-green-500">My Collections</a>
           <a href="#" className="block text-lg font-semibold hover:text-green-500">Profile</a>
         </nav>
       </aside>
 
-      {/* Main Content (No changes) */}
-      <main className="flex-1 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <input
-            type="text"
-            placeholder="Search collections..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 border-2 border-black rounded-md w-80"
-          />
-          <button className="px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400">
-            Connect Wallet
-          </button>
+      {/* Main Content */}
+      <main className="flex-1 p-6 transition-all duration-300 ease-in-out">
+        {/* Top Bar */}
+        <div className="flex justify-between items-center mb-4">
+          {!sidebarOpen && (<button className="text-white text-2xl ml-[-10px]" onClick={() => setSidebarOpen(true)}>☰</button>)}
+          <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="px-3 py-1 border-2 border-black rounded-md w-48 mx-4" />
+          <button className="px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400 w-28 ml-auto">Connect</button>
         </div>
 
-        {/* Tabs (No changes) */}
-        <div className="flex space-x-4 mb-6">
-          {['Newest', 'Featured', 'Trending'].map((tab) => (
-            <button
-              key={tab}
-              className={`px-4 py-2 border-2 border-black rounded-md font-bold ${
-                activeTab === tab ? "bg-green-500 text-white" : "bg-white"
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
+        {/* Tabs */}
+        <div className="flex space-x-2 mb-4 ml-[27px]">
+          {["Newest", "Featured", "Trending"].map((tab) => (
+            <button key={tab} className={`px-3 py-1 border-2 border-black rounded-md text-sm font-bold ${activeTab === tab ? "bg-green-500 text-white" : "bg-white"}`} onClick={() => setActiveTab(tab)}>{tab}</button>
           ))}
         </div>
 
         {/* Collection Grid */}
         {loading ? (
-          <p className="text-lg font-bold">Loading collections...</p>
-        ) : collections.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {collections.map((collection) => (
-              <div key={collection.id} className="border-2 border-black p-4 rounded-lg bg-white shadow-lg">
-                <div className="w-full h-[200px] flex items-center justify-center overflow-hidden">
-                  <Image
-                    src={collection.image_url || "/placeholder.jpg"} 
-                    alt={collection.name}
-                    width={300}
-                    height={200}
-                    className="rounded-md object-cover w-full h-full"
-                  />
+          <p className="text-lg font-bold text-right">Loading collections...</p>
+        ) : filteredCollections.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 ml-[27px]">
+            {filteredCollections.map((collection) => (
+              <div key={collection.id} className="border-2 border-black p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto">
+                <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
+                  <Image src={collection.image_url || "/placeholder.jpg"} alt={collection.name} width={350} height={350} className="rounded-md object-cover w-full h-full" />
                 </div>
-                <h2 className="text-xl font-bold mt-2">{collection.name}</h2>
-                <p>Items: {collection.items}</p>
-                <p>Minters: {collection.minters}</p>
-                <p>Floor Price: {collection.floor_price} PEPU</p>
-                <p>Volume: {collection.volume} PEPU</p>
+                <div className="flex flex-col flex-grow justify-between">
+                  <h2 className="text-xl font-bold mt-2">{collection.name}</h2>
+                  <p>Items: {collection.items}</p>
+                  <p>Minters: {collection.minters}</p>
+                  <p>Floor: {collection.floor_price} PEPU</p>
+                  <p>Volume: {collection.volume} PEPU</p>
+                </div>
                 <Link href={`/collection/${collection.id}`}>
-                  <button className="mt-3 px-4 py-2 bg-blue-500 text-white border-2 border-black rounded-md font-bold hover:bg-blue-400 w-full">
-                    View Collection
-                  </button>
+                  <button className="mt-3 px-4 py-2 bg-blue-500 text-white border-2 border-black rounded-md font-bold hover:bg-blue-400 w-full">View</button>
                 </Link>
-                {console.log("Collection ID:", collection.id)} {/* Debugging */}
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-lg font-bold">No collections found.</p>
+          <p className="text-lg font-bold text-right">No collections found.</p>
         )}
       </main>
     </div>
