@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Link from "next/link"; // Import Link
 
 // Initialize Supabase
 const supabase = createClient(
@@ -62,23 +63,28 @@ export default function DeployNFT() {
 
     const imageUrl = `https://anfgdvhvikwdfqiigzkp.supabase.co/storage/v1/object/public/nft-images/public/${fileName}`;
 
-    const { data, error } = await supabase.from("nft_collections").insert([
-      {
-        name: formData.name,
-        image_url: imageUrl,
-        description: formData.description,
-        items: formData.items,
-        minters: 0,
-        floor_price: formData.floorPrice,
-        volume: 0,
-        category: "newest",
-      },
-    ]);
+    const { data, error } = await supabase
+      .from("nft_collections")
+      .insert([
+        {
+          name: formData.name,
+          image_url: imageUrl,
+          description: formData.description,
+          items: formData.items,
+          minters: 0,
+          floor_price: formData.floorPrice,
+          volume: 0,
+          category: "newest",
+        },
+      ])
+      .select("id")
+      .single(); // Fetch the inserted collection ID
 
     setIsDeploying(false);
     if (error) return alert("Error deploying NFT!");
 
     setPopup({
+      id: data.id, // Store collection ID
       name: formData.name,
       image_url: imageUrl,
       description: formData.description,
@@ -101,7 +107,7 @@ export default function DeployNFT() {
       <h1 className="text-3xl font-bold text-black mb-4 text-center">
         Deploy New NFT Collection
       </h1>
-      
+
       <Image src="/pepu2.jpg" alt="PEPU Logo" width={100} height={100} className="rounded-full mb-4" />
       <p className="text-lg text-black text-center mb-6">
         Welcome to LilyPad! Fill in the details below to deploy your NFT collection.
@@ -114,7 +120,7 @@ export default function DeployNFT() {
           <input type="file" accept="image/*" className="border-black border-2 p-2 rounded-md" onChange={handleFileChange} />
           <input type="number" name="items" placeholder="Number of Items" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.items} />
           <input type="text" name="floorPrice" placeholder="Floor Price (PEPU)" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.floorPrice} />
-          
+
           <button className={`w-full py-2 text-white font-bold border-2 border-black rounded-md ${isFormValid ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`} onClick={handleDeploy} disabled={!isFormValid || isDeploying}>
             {isDeploying ? 'Deploying...' : 'Deploy NFT'}
           </button>
@@ -134,9 +140,11 @@ export default function DeployNFT() {
                 <p className="text-black">Floor Price: {popup.floorPrice} PEPU</p>
               </div>
             </div>
-            <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md border-2 border-black hover:bg-green-600 w-full" onClick={() => { setPopup(null); router.push("/"); }}>
-              View Collection
-            </button>
+            <Link href={`/collection/${popup.id}`}>
+              <button className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md border-2 border-black hover:bg-green-600 w-full">
+                View Collection
+              </button>
+            </Link>
           </div>
         </div>
       )}
