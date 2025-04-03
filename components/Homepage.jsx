@@ -16,7 +16,7 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
   const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
-  const [isMetaMaskAvailable, setIsMetaMaskAvailable] = useState(true);
+  const [showMetaMaskPopup, setShowMetaMaskPopup] = useState(false); // Track MetaMask popup state
 
   useEffect(() => {
     const getCollections = async () => {
@@ -29,10 +29,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!window.ethereum) {
-      setIsMetaMaskAvailable(false); // If MetaMask is not available
-    }
-
     const fetchAddress = async () => {
       const address = await getWalletAddress();
       setWalletAddress(address);
@@ -42,12 +38,18 @@ export default function HomePage() {
   }, []);
 
   const handleWalletConnect = async () => {
+    if (!window.ethereum) {
+      setShowMetaMaskPopup(true); // Show MetaMask popup if it's not available
+      return;
+    }
+
     if (walletAddress) {
       setShowDisconnectPopup(true);
     } else {
       const address = await connectWallet();
       if (address) {
         setWalletAddress(address);
+        setShowMetaMaskPopup(false); // Hide MetaMask popup if wallet is connected
       }
     }
   };
@@ -56,6 +58,10 @@ export default function HomePage() {
     await disconnectWallet();
     setWalletAddress(null);
     setShowDisconnectPopup(false);
+  };
+
+  const handleCloseMetaMaskPopup = () => {
+    setShowMetaMaskPopup(false); // Close the MetaMask popup
   };
 
   const filteredCollections = collections.filter(collection =>
@@ -114,40 +120,34 @@ export default function HomePage() {
       </motion.aside>
 
       <main className="flex-1 p-6 transition-all duration-300 ease-in-out mt-[64px]">
-        {isMetaMaskAvailable ? (
-          <>
-            {loading ? (
-              <p className="text-lg font-bold text-center">Loading collections...</p>
-            ) : filteredCollections.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {filteredCollections.map((collection) => (
-                  <motion.div 
-                    key={collection.id} 
-                    whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.5)" }}
-                    className="border-2 border-black p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto"
-                  >
-                    <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
-                      <Image src={collection.image_url || "/placeholder.jpg"} alt={collection.name} width={350} height={350} className="rounded-md object-cover w-full h-full" />
-                    </div>
-                    <div className="flex flex-col flex-grow justify-between text-black">
-                      <h2 className="text-xl font-bold mt-2">{collection.name}</h2>
-                      <p>Items: {collection.items}</p>
-                      <p>Minters: {collection.minters}</p>
-                      <p>Floor: {collection.floor_price} PEPU</p>
-                      <p>Volume: {collection.volume} PEPU</p>
-                    </div>
-                    <Link href={`/collection/${collection.id}`}>
-                      <button className="mt-3 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 w-full">View</button>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-lg font-bold text-center">No collections found.</p>
-            )}
-          </>
+        {loading ? (
+          <p className="text-lg font-bold text-center">Loading collections...</p>
+        ) : filteredCollections.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredCollections.map((collection) => (
+              <motion.div 
+                key={collection.id} 
+                whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.5)" }}
+                className="border-2 border-black p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto"
+              >
+                <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
+                  <Image src={collection.image_url || "/placeholder.jpg"} alt={collection.name} width={350} height={350} className="rounded-md object-cover w-full h-full" />
+                </div>
+                <div className="flex flex-col flex-grow justify-between text-black">
+                  <h2 className="text-xl font-bold mt-2">{collection.name}</h2>
+                  <p>Items: {collection.items}</p>
+                  <p>Minters: {collection.minters}</p>
+                  <p>Floor: {collection.floor_price} PEPU</p>
+                  <p>Volume: {collection.volume} PEPU</p>
+                </div>
+                <Link href={`/collection/${collection.id}`}>
+                  <button className="mt-3 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 w-full">View</button>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
         ) : (
-          <p className="text-lg font-bold text-center text-red-500">MetaMask is not installed. Please install MetaMask or get extension to continue.</p>
+          <p className="text-lg font-bold text-center">No collections found.</p>
         )}
       </main>
 
@@ -159,6 +159,17 @@ export default function HomePage() {
               <button onClick={() => setShowDisconnectPopup(false)} className="px-4 py-2 bg-green-500 border-black border-2 rounded-md">Cancel</button>
               <button onClick={handleDisconnect} className="px-4 py-2 bg-red-500 text-white border-black border-2 rounded-md font-bold">Disconnect</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MetaMask installation popup */}
+      {showMetaMaskPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-blue-900 border-2 border-black p-6 rounded-lg shadow-lg text-white w-80">
+            <h2 className="text-xl font-bold mb-4 text-yellow-300">MetaMask is not installed!</h2>
+            <p className="mb-4">Please install MetaMask to connect your wallet and proceed.</p>
+            <button onClick={handleCloseMetaMaskPopup} className="px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md">Got it!</button>
           </div>
         </div>
       )}
