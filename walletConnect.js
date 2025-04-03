@@ -29,6 +29,17 @@ export const connectWallet = async () => {
   }
 };
 
+// Check if MetaMask mobile is available
+const isMetaMaskMobile = () => {
+  if (window.ethereum && window.ethereum.isMetaMask) {
+    return true;  // MetaMask is installed
+  }
+
+  // Check for mobile specific app presence (MetaMask Mobile)
+  const userAgent = navigator.userAgent.toLowerCase();
+  return userAgent.includes("metamask");
+};
+
 // Retrieve saved wallet address from local storage
 export const getSavedWallet = () => {
   return localStorage.getItem(WALLET_KEY);
@@ -50,7 +61,7 @@ export const getWalletAddress = async () => {
   try {
     // Create a provider
     const provider = new BrowserProvider(window.ethereum);
-    
+
     // Alternative way to get accounts
     const accounts = await provider.send("eth_accounts", []);
     const address = accounts[0];  // Take the first account address
