@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -16,7 +14,6 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
   const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
-  const [showMetaMaskPopup, setShowMetaMaskPopup] = useState(false); // Track MetaMask popup state
 
   useEffect(() => {
     const getCollections = async () => {
@@ -38,18 +35,12 @@ export default function HomePage() {
   }, []);
 
   const handleWalletConnect = async () => {
-    if (!window.ethereum) {
-      setShowMetaMaskPopup(true); // Show MetaMask popup if it's not available
-      return;
-    }
-
     if (walletAddress) {
       setShowDisconnectPopup(true);
     } else {
       const address = await connectWallet();
       if (address) {
         setWalletAddress(address);
-        setShowMetaMaskPopup(false); // Hide MetaMask popup if wallet is connected
       }
     }
   };
@@ -58,10 +49,6 @@ export default function HomePage() {
     await disconnectWallet();
     setWalletAddress(null);
     setShowDisconnectPopup(false);
-  };
-
-  const handleCloseMetaMaskPopup = () => {
-    setShowMetaMaskPopup(false); // Close the MetaMask popup
   };
 
   const filteredCollections = collections.filter(collection =>
@@ -159,17 +146,6 @@ export default function HomePage() {
               <button onClick={() => setShowDisconnectPopup(false)} className="px-4 py-2 bg-green-500 border-black border-2 rounded-md">Cancel</button>
               <button onClick={handleDisconnect} className="px-4 py-2 bg-red-500 text-white border-black border-2 rounded-md font-bold">Disconnect</button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MetaMask installation popup */}
-      {showMetaMaskPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-blue-900 border-2 border-black p-6 rounded-lg shadow-lg text-white w-80">
-            <h2 className="text-xl font-bold mb-4 text-yellow-300">MetaMask is not installed!</h2>
-            <p className="mb-4">Please install MetaMask to connect your wallet and proceed.</p>
-            <button onClick={handleCloseMetaMaskPopup} className="px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md">Got it!</button>
           </div>
         </div>
       )}
