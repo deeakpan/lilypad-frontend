@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCollections } from "../supabase"; 
-import { FaBars, FaHome, FaPlusCircle, FaLayerGroup, FaUser } from "react-icons/fa";
+import { FaBars, FaHome, FaPlusCircle, FaInfoCircle,FaLayerGroup, FaUser } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { connectWallet, getWalletAddress, disconnectWallet } from "../walletConnect";
 
@@ -50,6 +50,24 @@ export default function HomePage() {
     collection.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Placeholder for "Coming Soon" UI
+  const renderComingSoon = (tabName) => {
+    return (
+      <div className="flex justify-center items-center h-full text-white">
+        <h2 className="text-2xl font-bold">🚧 {tabName} - Coming Soon 🚧</h2>
+      </div>
+    );
+  };
+
+  // Handle case when no collections match search
+  const renderNoResults = () => {
+    return (
+      <div className="flex justify-center items-center h-full text-white">
+        <h2 className="text-2xl font-bold">⚠️ Collection Not Found ⚠️</h2>
+      </div>
+    );
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-dark-green text-white">
       {/* Header - Made responsive */}
@@ -64,7 +82,7 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
           <input 
             type="text" 
-            placeholder="Search..." 
+            placeholder="Search NFT Collec..."
             value={searchQuery} 
             onChange={(e) => setSearchQuery(e.target.value)} 
             className="px-3 py-1 border-2 border-black rounded-md w-full sm:w-48 bg-white text-black"
@@ -105,18 +123,27 @@ export default function HomePage() {
       >
         <h1 className="text-lg font-bold mb-6 text-yellow-300">LilyPad Menu</h1>
         <nav className="space-y-4">
-          <Link href="/" className="flex items-center gap-2 text-lg font-semibold hover:text-green-400">
+          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
             <FaHome /> Home
-          </Link>
+          </button>
           <Link href="/DeployNFT" className="flex items-center gap-2 text-lg font-semibold hover:text-green-400">
             <FaPlusCircle /> Create Collection
           </Link>
-          <Link href="/my-collections" className="flex items-center gap-2 text-lg font-semibold hover:text-green-400">
+          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
             <FaLayerGroup /> My Collections
-          </Link>
-          <Link href="/profile" className="flex items-center gap-2 text-lg font-semibold hover:text-green-400">
+          </button>
+          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
             <FaUser /> Profile
-          </Link>
+          </button>
+          {/* Added About Section Link */}
+          <a 
+            href="https://docs.google.com/document/d/1MVjbYivJxyqC5In5k37iX9kG3YQdhGKcl-PAlVhw3xo/edit?usp=sharing" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-lg font-semibold hover:text-green-400"
+          >
+            <FaInfoCircle /> About
+          </a>
         </nav>
       </motion.aside>
 
@@ -124,42 +151,46 @@ export default function HomePage() {
       <main className="flex-1 p-4 sm:p-6 transition-all duration-300 ease-in-out mt-[140px] sm:mt-[80px]">
         {isLoading ? (
           <p className="text-lg font-bold text-center">Loading collections...</p>
-        ) : filteredCollections.length > 0 ? (
+        ) : activeTab === "Newest" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredCollections.map((collection) => (
-              <motion.div 
-                key={collection.id} 
-                whileHover={{ scale: 1.02, boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.5)" }}
-                className="border-2 border-black p-3 sm:p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto"
-              >
-                <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
-                  <Image 
-                    src={collection.image_url || "/placeholder.jpg"} 
-                    alt={collection.name} 
-                    width={350} 
-                    height={350} 
-                    className="rounded-md object-cover w-full h-full"
-                  />
-                </div>
-                <div className="flex flex-col flex-grow justify-between text-black mt-3">
-                  <h2 className="text-lg sm:text-xl font-bold">{collection.name}</h2>
-                  <div className="space-y-1 mt-2 text-sm sm:text-base">
-                    <p>Items: {collection.items}</p>
-                    <p>Minters: {collection.minters}</p>
-                    <p>Floor: {collection.floor_price} PEPU</p>
-                    <p>Volume: {collection.volume} PEPU</p>
+            {filteredCollections.length > 0 ? (
+              filteredCollections.map((collection) => (
+                <motion.div 
+                  key={collection.id} 
+                  whileHover={{ scale: 1.02, boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.5)" }}
+                  className="border-2 border-black p-3 sm:p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto"
+                >
+                  <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
+                    <Image 
+                      src={collection.image_url || "/placeholder.jpg"} 
+                      alt={collection.name} 
+                      width={350} 
+                      height={350} 
+                      className="rounded-md object-cover w-full h-full"
+                    />
                   </div>
-                </div>
-                <Link href={`/collection/${collection.id}`} className="block mt-3">
-                  <button className="w-full px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors">
-                    View
-                  </button>
-                </Link>
-              </motion.div>
-            ))}
+                  <div className="flex flex-col flex-grow justify-between text-black mt-3">
+                    <h2 className="text-lg sm:text-xl font-bold">{collection.name}</h2>
+                    <div className="space-y-1 mt-2 text-sm sm:text-base">
+                      <p>Items: {collection.items}</p>
+                      <p>Minters: {collection.minters}</p>
+                      <p>Floor: {collection.floor_price} PEPU</p>
+                      <p>Volume: {collection.volume} PEPU</p>
+                    </div>
+                  </div>
+                  <Link href={`/collection/${collection.id}`} className="block mt-3">
+                    <button className="w-full px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors">
+                      View
+                    </button>
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              renderNoResults()
+            )}
           </div>
         ) : (
-          <p className="text-lg font-bold text-center">No collections found.</p>
+          renderComingSoon(activeTab)
         )}
       </main>
 

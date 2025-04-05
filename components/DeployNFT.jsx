@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link"; // Import Link
+import { FaArrowLeft } from "react-icons/fa"; // Importing the back arrow icon
 
 // Initialize Supabase
 const supabase = createClient(
@@ -26,7 +27,16 @@ export default function DeployNFT() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Ensure floorPrice and items are numeric inputs
+    if (name === "items" || name === "floorPrice") {
+      // Allow only digits (positive integers)
+      if (/^\d*$/.test(value)) {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -97,14 +107,17 @@ export default function DeployNFT() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-green-100 p-6">
+      {/* Back Button with Icon */}
       <button
-        className="absolute top-4 left-4 bg-green-500 text-white border-2 border-black px-4 py-2 rounded-md hover:bg-green-600"
+        className="absolute top-6 left-4 text-black flex items-center space-x-2 hover:bg-green-600 px-4 py-2 rounded-md"
         onClick={() => router.push("/")}
       >
-        Back
+        <FaArrowLeft /> {/* Back arrow icon */}
+        <span className="text-sm"></span>
       </button>
 
-      <h1 className="text-3xl font-bold text-black mb-4 text-center">
+      {/* Heading with Adjusted Margin */}
+      <h1 className="text-2xl font-bold text-black mb-10 text-center">
         Deploy New NFT Collection
       </h1>
 
@@ -118,7 +131,7 @@ export default function DeployNFT() {
           <input type="text" name="name" placeholder="Collection Name" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.name} />
           <textarea name="description" placeholder="Description" className="border-black border-2 p-2 rounded-md h-24" onChange={handleChange} value={formData.description} />
           <input type="file" accept="image/*" className="border-black border-2 p-2 rounded-md" onChange={handleFileChange} />
-          <input type="number" name="items" placeholder="Number of Items" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.items} />
+          <input type="text" name="items" placeholder="Number of Items" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.items} />
           <input type="text" name="floorPrice" placeholder="Floor Price (PEPU)" className="border-black border-2 p-2 rounded-md" onChange={handleChange} value={formData.floorPrice} />
 
           <button className={`w-full py-2 text-white font-bold border-2 border-black rounded-md ${isFormValid ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`} onClick={handleDeploy} disabled={!isFormValid || isDeploying}>

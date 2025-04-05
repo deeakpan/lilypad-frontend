@@ -61,7 +61,7 @@ export default function CollectionPage() {
         {/* Website Badge */}
         <div className="mt-2 flex justify-center">
           <p className="px-3 py-1 bg-gray-500 text-white rounded-full text-sm font-semibold border border-black">
-            www.LilyPad.netlify
+          https://lilypad-mint.netlify.app/
           </p>
         </div>
 
