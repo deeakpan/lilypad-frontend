@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchCollections } from "../supabase"; 
 import { FaBars, FaHome, FaPlusCircle, FaLayerGroup, FaUser } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -9,30 +10,24 @@ import { connectWallet, getWalletAddress, disconnectWallet } from "../walletConn
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("Newest");
   const [searchQuery, setSearchQuery] = useState("");
-  const [collections, setCollections] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
   const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
 
-  useEffect(() => {
-    const getCollections = async () => {
-      const data = await fetchCollections();  
-      console.log("Fetched collections data:", data);
-      setCollections(data || []);
-      setLoading(false);
-    };
-    getCollections();
-  }, []);
+  // Use React Query for fetching collections
+  const { data: collections = [], isLoading } = useQuery({
+    queryKey: ['collections'],
+    queryFn: fetchCollections
+  });
 
-  useEffect(() => {
-    const fetchAddress = async () => {
-      const address = await getWalletAddress();
-      setWalletAddress(address);
-      console.log("Retrieved wallet address:", address);
-    };
-    fetchAddress();
-  }, []);
+  // Use React Query for wallet address
+  const { data: savedWalletAddress } = useQuery({
+    queryKey: ['walletAddress'],
+    queryFn: getWalletAddress,
+    onSuccess: (address) => {
+      if (address) setWalletAddress(address);
+    }
+  });
 
   const handleWalletConnect = async () => {
     if (walletAddress) {
@@ -127,7 +122,7 @@ export default function HomePage() {
 
       {/* Main content - Made responsive */}
       <main className="flex-1 p-4 sm:p-6 transition-all duration-300 ease-in-out mt-[140px] sm:mt-[80px]">
-        {loading ? (
+        {isLoading ? (
           <p className="text-lg font-bold text-center">Loading collections...</p>
         ) : filteredCollections.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">

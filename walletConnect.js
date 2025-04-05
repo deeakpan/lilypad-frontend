@@ -1,23 +1,32 @@
-import { BrowserProvider } from "ethers";
+import { ethers } from "ethers";
 
 const WALLET_KEY = "connectedWallet";
 
-// Check if MetaMask is available (both mobile and desktop)
+// Check if MetaMask is available
 const isMetaMaskAvailable = () => {
-  const { ethereum } = window;
-  return Boolean(ethereum && (ethereum.isMetaMask || ethereum.provider?.isMetaMask));
+  return typeof window.ethereum !== "undefined" && window.ethereum.isMetaMask;
 };
 
 // Connect to the wallet and retrieve address
 export const connectWallet = async () => {
-  // Check if MetaMask is available
   if (!isMetaMaskAvailable()) {
-    // Detect if on mobile and MetaMask isn't installed
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) {
-      // Redirect to MetaMask app using deep link
-      window.location.href = 'https://metamask.app.link/dapp/https://lilypad-mint.netlify.app/';
-      return null;
+      // Open MetaMask mobile deep link to handle mobile interaction
+      window.open("https://metamask.app.link/dapp/" + window.location.host, "_blank");
+      return new Promise(resolve => {
+        // Since on mobile MetaMask doesn’t always immediately return the address,
+        // we need to keep trying until we get the address.
+        const interval = setInterval(async () => {
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const accounts = await provider.listAccounts();
+          if (accounts.length > 0) {
+            clearInterval(interval);
+            localStorage.setItem(WALLET_KEY, accounts[0]);
+            resolve(accounts[0]);
+          }
+        }, 1000); // Retry every second
+      });
     } else {
       alert("Please install MetaMask to continue.");
       return null;
@@ -25,19 +34,12 @@ export const connectWallet = async () => {
   }
 
   try {
-    // Get the appropriate provider
-    const provider = window.ethereum.provider || window.ethereum;
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
     
-    // Request the user's accounts
-    await provider.request({ method: "eth_requestAccounts" });
+    const signer = provider.getSigner();
+    const walletAddress = await signer.getAddress();
 
-    // Create an ethers provider
-    const ethersProvider = new BrowserProvider(provider);
-    
-    // Retrieve the wallet address
-    const accounts = await ethersProvider.send("eth_accounts", []);
-    const walletAddress = accounts[0];
-    
     localStorage.setItem(WALLET_KEY, walletAddress);
     return walletAddress;
   } catch (error) {
@@ -59,18 +61,14 @@ export const getWalletAddress = async () => {
   }
 
   if (!isMetaMaskAvailable()) {
-    console.error("MetaMask is not installed or Ethereum provider is not available.");
+    console.error("MetaMask is not installed.");
     return null;
   }
 
   try {
-    const provider = window.ethereum.provider || window.ethereum;
-    const ethersProvider = new BrowserProvider(provider);
-    
-    const accounts = await ethersProvider.send("eth_accounts", []);
-    const address = accounts[0];
-    
-    return address;
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const accounts = await provider.listAccounts();
+    return accounts[0] || null;
   } catch (error) {
     console.error("Error retrieving wallet address:", error);
     return null;
@@ -81,9 +79,4 @@ export const getWalletAddress = async () => {
 export const disconnectWallet = async () => {
   localStorage.removeItem(WALLET_KEY);
   sessionStorage.clear();
-
-  const provider = window.ethereum?.provider || window.ethereum;
-  if (provider?.disconnect) {
-    await provider.disconnect();
-  }
 };
