@@ -117,7 +117,7 @@ export default function DeployNFT() {
       </button>
 
       {/* Heading with Adjusted Margin */}
-      <h1 className="text-2xl font-bold text-black mb-10 text-center">
+      <h1 className="text-[1.2rem] font-bold fonttext-black mb-10 text-center">
         Deploy New NFT Collection
       </h1>
 

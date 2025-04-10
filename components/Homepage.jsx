@@ -1,18 +1,26 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCollections } from "../supabase"; 
-import { FaBars, FaHome, FaPlusCircle, FaInfoCircle,FaLayerGroup, FaUser } from "react-icons/fa";
-import { motion } from "framer-motion";
+import { 
+  FaBars, FaTimes, FaHome, FaPlusCircle, FaInfoCircle, 
+  FaLayerGroup, FaUser, FaSearch, FaWallet, FaChartBar, 
+  FaFire, FaShoppingBag, FaGem, FaHistory, FaBullhorn,
+  FaHeart, FaAward, FaStar, FaBookmark, FaGift
+} from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 import { connectWallet, getWalletAddress, disconnectWallet } from "../walletConnect";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("Newest");
+  const [activeCategory, setActiveCategory] = useState("explore");
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState(null);
   const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
 
   // Use React Query for fetching collections
   const { data: collections = [], isLoading } = useQuery({
@@ -28,6 +36,39 @@ export default function HomePage() {
       if (address) setWalletAddress(address);
     }
   });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Handle mobile sidebar
+      const mobileSidebar = document.getElementById('mobile-sidebar');
+      const hamburgerBtn = document.getElementById('hamburger-button');
+      
+      if (sidebarOpen && mobileSidebar && !mobileSidebar.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+        setSidebarOpen(false);
+      }
+      
+      // Handle desktop sidebar
+      const desktopSidebar = document.getElementById('desktop-sidebar');
+      const desktopBtn = document.getElementById('desktop-sidebar-button');
+      
+      if (desktopSidebarOpen && desktopSidebar && !desktopSidebar.contains(event.target) && !desktopBtn.contains(event.target)) {
+        setDesktopSidebarOpen(false);
+      }
+    };
+
+    // Prevent scrolling when mobile sidebar is open
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [sidebarOpen, desktopSidebarOpen]);
 
   const handleWalletConnect = async () => {
     if (walletAddress) {
@@ -46,158 +87,464 @@ export default function HomePage() {
     setShowDisconnectPopup(false);
   };
 
+  const toggleSearchBar = () => {
+    setSearchVisible(!searchVisible);
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const toggleDesktopSidebar = () => {
+    setDesktopSidebarOpen(!desktopSidebarOpen);
+  };
+
   const filteredCollections = collections.filter(collection =>
     collection.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Placeholder for "Coming Soon" UI
+  // Improved "Coming Soon" UI
   const renderComingSoon = (tabName) => {
     return (
-      <div className="flex justify-center items-center h-full text-white">
-        <h2 className="text-2xl font-bold">🚧 {tabName} - Coming Soon 🚧</h2>
+      <div className="flex flex-col justify-center items-center h-64 bg-blue-900 rounded-lg border-2 border-black shadow-lg p-8 w-full max-w-lg mx-auto">
+        <div className="text-yellow-300 text-6xl mb-4">🚧</div>
+        <h2 className="text-3xl font-bold text-yellow-300 mb-2">{tabName}</h2>
+        <p className="text-white text-xl">Coming Soon to LilyPad</p>
+        <div className="mt-6 bg-green-500 text-black font-bold py-2 px-6 rounded-md border-2 border-black">
+          Stay Tuned!
+        </div>
       </div>
     );
   };
 
-  // Handle case when no collections match search
+  // Improved "No Results" UI
   const renderNoResults = () => {
     return (
-      <div className="flex justify-center items-center h-full text-white">
-        <h2 className="text-2xl font-bold">⚠️ Collection Not Found ⚠️</h2>
+      <div className="flex flex-col justify-center items-center h-64 bg-blue-900 rounded-lg border-2 border-black shadow-lg p-8 w-full max-w-lg mx-auto">
+        <div className="text-yellow-300 text-6xl mb-4">⚠️</div>
+        <h2 className="text-2xl font-bold text-white mb-2">Collection Not Found</h2>
+        <p className="text-white text-lg text-center">We couldn't find any collections matching your search.</p>
+        <button 
+          onClick={() => setSearchQuery("")} 
+          className="mt-6 bg-green-500 text-black font-bold py-2 px-6 rounded-md border-2 border-black"
+        >
+          Clear Search
+        </button>
       </div>
     );
+  };
+
+  // Sidebar animation variants with bouncing effect
+  const sidebarVariants = {
+    open: { 
+      x: 0, 
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 15,
+        restDelta: 0.01,
+        bounce: 0.4
+      } 
+    },
+    closed: { 
+      x: "-100%", 
+      transition: { 
+        type: "spring", 
+        stiffness: 400, 
+        damping: 25
+      } 
+    }
+  };
+
+  const overlayVariants = {
+    open: { opacity: 1, transition: { duration: 0.2 } },
+    closed: { opacity: 0, transition: { duration: 0.2 } }
+  };
+
+  // Define categories for sidebar and navigation
+  const navigationCategories = {
+    explore: [
+      { name: "Home", icon: <FaHome className="w-5 h-5" />, path: "/", active: true },
+      { name: "Stats", icon: <FaChartBar className="w-5 h-5" />, path: "/stats", active: false },
+      { name: "Drops", icon: <FaGift className="w-5 h-5" />, path: "/drops", active: false },
+      { name: "Marketplace", icon: <FaShoppingBag className="w-5 h-5" />, path: "/marketplace", active: false },
+      { name: "Rankings", icon: <FaAward className="w-5 h-5" />, path: "/rankings", active: false },
+    ],
+    create: [
+      { name: "Create Collection", icon: <FaPlusCircle className="w-5 h-5" />, path: "/DeployNFT", active: true },
+      { name: "My Collections", icon: <FaLayerGroup className="w-5 h-5" />, path: "/my-collections", active: false },
+    ],
+    account: [
+      { name: "Profile", icon: <FaUser className="w-5 h-5" />, path: "/profile", active: false },
+      { name: "Favorites", icon: <FaHeart className="w-5 h-5" />, path: "/favorites", active: false },
+      { name: "Transaction History", icon: <FaHistory className="w-5 h-5" />, path: "/history", active: false },
+      { name: "Watchlist", icon: <FaBookmark className="w-5 h-5" />, path: "/watchlist", active: false },
+    ],
+    other: [
+      { name: "About", icon: <FaInfoCircle className="w-5 h-5" />, path: "https://docs.google.com/document/d/1MVjbYivJxyqC5In5k37iX9kG3YQdhGKcl-PAlVhw3xo/edit?usp=sharing", active: true, external: true },
+      { name: "News", icon: <FaBullhorn className="w-5 h-5" />, path: "/news", active: false },
+    ]
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-dark-green text-white">
-      {/* Header - Made responsive */}
-      <div className="fixed top-0 left-0 w-full bg-blue-500 p-2 sm:p-4 flex flex-col sm:flex-row justify-between items-center z-50 border-b-2 border-black gap-2 sm:gap-4">
-        <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="text-white hover:text-gray-300">
-            <FaBars size={24} />
-          </button>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-wide text-yellow-300">🌿 LilyPad</h1>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full sm:w-auto">
-          <input 
-            type="text" 
-            placeholder="Search NFT Collec..."
-            value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} 
-            className="px-3 py-1 border-2 border-black rounded-md w-full sm:w-48 bg-white text-black"
+    <div className="min-h-screen bg-dark-green text-white">
+      {/* Desktop Sidebar */}
+      <AnimatePresence>
+        {desktopSidebarOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-25 z-40 hidden lg:block"
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={overlayVariants}
+            onClick={() => setDesktopSidebarOpen(false)}
           />
+        )}
+      </AnimatePresence>
+
+      <div className="hidden lg:block">
+        <motion.div
+          id="desktop-sidebar"
+          className="fixed top-0 left-0 h-screen w-64 bg-blue-900 border-r-2 border-black z-50"
+          initial="closed"
+          animate={desktopSidebarOpen ? "open" : "closed"}
+          variants={sidebarVariants}
+        >
+          <div className="h-16 flex items-center pl-5 border-b-2 border-black">
+            <h2 className="text-xl font-bold text-yellow-300 text-left">Menu</h2>
+          </div>
+
+          <div className="flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+            <nav className="p-5 flex flex-col space-y-6">
+              {Object.entries(navigationCategories).map(([category, items]) => (
+                <div key={category} className="space-y-3">
+                  <h3 className="text-sm uppercase text-green-400 font-bold tracking-wider">
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                  </h3>
+                  <div className="space-y-3 pl-1">
+                    {items.map((item) => (
+                      item.external ? (
+                        <a 
+                          key={item.name}
+                          href={item.path} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 text-lg font-semibold hover:text-green-400 w-full text-left"
+                        >
+                          {item.icon} {item.name}
+                        </a>
+                      ) : (
+                        <Link 
+                          key={item.name}
+                          href={item.path} 
+                          className={`flex items-center gap-3 text-lg font-semibold hover:text-green-400 w-full text-left ${
+                            !item.active ? 'opacity-70 cursor-default' : ''
+                          }`}
+                          onClick={(e) => !item.active && e.preventDefault()}
+                        >
+                          {item.icon} {item.name}
+                        </Link>
+                      )
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+            
+            <div className="mt-auto p-4 border-t-2 border-black">
+              <p className="text-sm text-white text-center">© 2025 LilyPad</p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Fixed Header - Now full width */}
+      <div className="fixed top-0 left-0 right-0 w-full bg-blue-500 p-4 shadow-lg z-40 border-b-2 border-black">
+        <div className="max-w-7xl mx-auto">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex justify-between items-center">
+            <div className="flex items-center space-x-4">
+              <button 
+                id="hamburger-button"
+                onClick={toggleSidebar} 
+                className="text-white z-50"
+              >
+                {sidebarOpen ? <FaTimes className="w-6 h-6" /> : <FaBars className="w-6 h-6" />}
+              </button>
+              <h1 className="text-2xl font-extrabold tracking-wide text-yellow-300">🌿 LilyPad</h1>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button onClick={toggleSearchBar} className="text-white">
+                <FaSearch className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleWalletConnect} 
+                className="flex items-center gap-1 px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+              >
+                <FaWallet className="w-4 h-4" />
+                <span className="text-sm">{walletAddress ? walletAddress.slice(0, 6) + "..." : "Connect"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:flex items-center justify-between">
+            <div className="flex items-center space-x-6">
+              <button 
+                id="desktop-sidebar-button"
+                onClick={toggleDesktopSidebar}
+                className="text-white"
+              >
+                <FaBars className="w-6 h-6" />
+              </button>
+              <h1 className="text-3xl font-extrabold tracking-wide text-yellow-300">🌿 LilyPad</h1>
+              
+              {/* Search Bar - Now after branding with rounded edges */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="h-4 w-4 text-gray-500" />
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Search collections..."
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border-2 border-black rounded-full w-60 bg-white text-black focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Collection Tabs */}
+              <div className="flex space-x-2">
+                {["Newest", "Featured", "Trending"].map((tab) => (
+                  <button 
+                    key={tab} 
+                    onClick={() => setActiveTab(tab)} 
+                    className={`px-4 py-2 rounded-md text-base font-bold border-2 border-black transition
+                      ${activeTab === tab ? 'bg-green-500 text-black' : 'bg-white text-black'}`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              
+              <button 
+                onClick={handleWalletConnect} 
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+              >
+                <FaWallet className="w-4 h-4" />
+                <span>{walletAddress ? walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4) : "Connect Wallet"}</span>
+              </button>
+            </div>
+          </div>
           
-          <div className="flex gap-2 sm:gap-4 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+          {/* Mobile Search Bar */}
+          {searchVisible && (
+            <div className="lg:hidden mt-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="h-4 w-4 text-gray-500" />
+                </div>
+                <input
+                  type="text"
+                  className="w-full pl-10 pr-4 py-2 border-2 border-black rounded-full bg-white text-black"
+                  placeholder="Search collections..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Mobile Tabs */}
+          <div className="lg:hidden flex justify-between mt-4 overflow-x-auto pb-2">
             {["Newest", "Featured", "Trending"].map((tab) => (
               <button 
                 key={tab} 
                 onClick={() => setActiveTab(tab)} 
-                className={`px-3 sm:px-4 py-1 sm:py-2 rounded-md text-sm sm:text-base font-bold border-2 border-black transition whitespace-nowrap
+                className={`px-3 py-1 rounded-md text-sm font-bold border-2 border-black transition flex-1 mx-1
                   ${activeTab === tab ? 'bg-green-500 text-black' : 'bg-white text-black'}`}
               >
                 {tab}
               </button>
             ))}
           </div>
-          
-          <button 
-            onClick={handleWalletConnect} 
-            className="px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400 w-full sm:w-auto whitespace-nowrap"
-          >
-            {walletAddress ? walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4) : "Connect"}
-          </button>
         </div>
       </div>
 
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => setSidebarOpen(false)}></div>
-      )}
+      {/* Mobile Sidebar */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={overlayVariants}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Sidebar - Made responsive */}
-      <motion.aside
-        initial={{ x: "-100%" }}
-        animate={{ x: sidebarOpen ? "0%" : "-100%" }}
-        transition={{ type: "spring", stiffness: 120 }}
-        className="fixed top-0 left-0 h-full bg-blue-900 p-4 sm:p-6 border-r-2 border-black w-64 z-50 shadow-lg text-white"
+      <motion.div
+        id="mobile-sidebar"
+        className="fixed top-0 left-0 h-screen w-64 bg-blue-900 border-r-2 border-black z-50 lg:hidden"
+        initial="closed"
+        animate={sidebarOpen ? "open" : "closed"}
+        variants={sidebarVariants}
       >
-        <h1 className="text-lg font-bold mb-6 text-yellow-300">LilyPad Menu</h1>
-        <nav className="space-y-4">
-          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
-            <FaHome /> Home
-          </button>
-          <Link href="/DeployNFT" className="flex items-center gap-2 text-lg font-semibold hover:text-green-400">
-            <FaPlusCircle /> Create Collection
-          </Link>
-          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
-            <FaLayerGroup /> My Collections
-          </button>
-          <button className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 opacity-70 cursor-default">
-            <FaUser /> Profile
-          </button>
-          {/* Added About Section Link */}
-          <a 
-            href="https://docs.google.com/document/d/1MVjbYivJxyqC5In5k37iX9kG3YQdhGKcl-PAlVhw3xo/edit?usp=sharing" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-lg font-semibold hover:text-green-400"
-          >
-            <FaInfoCircle /> About
-          </a>
-        </nav>
-      </motion.aside>
+        <div className="sticky top-0 bg-blue-900 p-6 border-b-2 border-black">
+          <h2 className="text-xl font-bold text-yellow-300 text-left">Menu</h2>
+        </div>
 
-      {/* Main content - Made responsive */}
-      <main className="flex-1 p-4 sm:p-6 transition-all duration-300 ease-in-out mt-[140px] sm:mt-[80px]">
-        {isLoading ? (
-          <p className="text-lg font-bold text-center">Loading collections...</p>
-        ) : activeTab === "Newest" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredCollections.length > 0 ? (
-              filteredCollections.map((collection) => (
-                <motion.div 
-                  key={collection.id} 
-                  whileHover={{ scale: 1.02, boxShadow: "0px 0px 20px rgba(255, 255, 255, 0.5)" }}
-                  className="border-2 border-black p-3 sm:p-4 rounded-lg bg-white shadow-lg flex flex-col justify-between h-auto"
-                >
-                  <div className="w-full aspect-square flex items-center justify-center overflow-hidden">
-                    <Image 
-                      src={collection.image_url || "/placeholder.jpg"} 
-                      alt={collection.name} 
-                      width={350} 
-                      height={350} 
-                      className="rounded-md object-cover w-full h-full"
-                    />
+        <div className="flex flex-col h-[calc(100vh-5rem)] overflow-y-auto">
+          <nav className="flex-1 p-6">
+            {Object.entries(navigationCategories).map(([category, items]) => (
+              <div key={category} className="mb-6">
+                <h3 className="text-sm uppercase text-green-400 font-bold tracking-wider mb-3">
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </h3>
+                <div className="space-y-3 pl-1">
+                  {items.map((item) => (
+                    item.external ? (
+                      <a 
+                        key={item.name}
+                        href={item.path} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-lg font-semibold hover:text-green-400 w-full text-left"
+                      >
+                        {item.icon} {item.name}
+                      </a>
+                    ) : (
+                      <Link 
+                        key={item.name}
+                        href={item.path} 
+                        className={`flex items-center gap-2 text-lg font-semibold hover:text-green-400 w-full text-left ${
+                          !item.active ? 'opacity-70 cursor-default' : ''
+                        }`}
+                        onClick={(e) => !item.active && e.preventDefault()}
+                      >
+                        {item.icon} {item.name}
+                      </Link>
+                    )
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+          
+          <div className="mt-auto p-4 border-t-2 border-black">
+            <p className="text-sm text-white text-center">© 2025 LilyPad</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main content - Using the natural dark-green background with full-width blue background */}
+      <div className="bg-dark-green min-h-screen" style={{ paddingTop: "calc(4rem + 48px)" }}>
+        <div className="w-full bg-blue-500 min-h-screen">
+          <div 
+            className={`max-w-7xl mx-auto px-4 py-6 transition-all duration-300 ${sidebarOpen ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}
+          >
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <p className="text-lg font-bold text-center">Loading collections...</p>
+              </div>
+            ) : activeTab === "Newest" ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+                {filteredCollections.length > 0 ? (
+                  filteredCollections.map((collection) => (
+                    <motion.div 
+                      key={collection.id} 
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="border-2 border-black rounded-lg bg-white shadow-lg flex flex-col transform transition duration-500 hover:shadow-xl overflow-hidden"
+                    >
+                      <div className="w-full aspect-square relative border-b-2 border-black">
+                        <Image 
+                          src={collection.image_url || "/placeholder.jpg"} 
+                          alt={collection.name} 
+                          layout="fill"
+                          objectFit="cover"
+                        />
+                      </div>
+                      <div className="p-3 lg:p-4 flex flex-col text-black">
+                        <h2 className="text-base sm:text-lg font-bold truncate">{collection.name}</h2>
+                        
+                        {/* Desktop - Vertical layout */}
+                        <div className="hidden lg:flex flex-col space-y-1 mt-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm font-semibold text-gray-600">Items:</span>
+                            <span className="text-sm">{collection.items}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-semibold text-gray-600">Minters:</span>
+                            <span className="text-sm">{collection.minters}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-semibold text-gray-600">Floor:</span>
+                            <span className="text-sm">{collection.floor_price} PEPU</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm font-semibold text-gray-600">Volume:</span>
+                            <span className="text-sm">{collection.volume} PEPU</span>
+                          </div>
+                        </div>
+                        
+                        {/* Mobile - Compact layout */}
+                        <div className="lg:hidden grid grid-cols-2 gap-x-1 gap-y-0.5 mt-1.5">
+                          <div>
+                            <span className="text-xs font-semibold text-gray-600">Items:</span>
+                            <span className="text-xs ml-1">{collection.items}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-gray-600">Minters:</span>
+                            <span className="text-xs ml-1">{collection.minters}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-gray-600">Floor:</span>
+                            <span className="text-xs ml-1">{collection.floor_price}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-gray-600">Volume:</span>
+                            <span className="text-xs ml-1">{collection.volume}</span>
+                          </div>
+                        </div>
+                        
+                        <Link href={`/collection/${collection.id}`} className="block mt-3">
+                          <button className="w-full px-2 py-1.5 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors text-sm">
+                            View
+                          </button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="col-span-full">
+                    {renderNoResults()}
                   </div>
-                  <div className="flex flex-col flex-grow justify-between text-black mt-3">
-                    <h2 className="text-lg sm:text-xl font-bold">{collection.name}</h2>
-                    <div className="space-y-1 mt-2 text-sm sm:text-base">
-                      <p>Items: {collection.items}</p>
-                      <p>Minters: {collection.minters}</p>
-                      <p>Floor: {collection.floor_price} PEPU</p>
-                      <p>Volume: {collection.volume} PEPU</p>
-                    </div>
-                  </div>
-                  <Link href={`/collection/${collection.id}`} className="block mt-3">
-                    <button className="w-full px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors">
-                      View
-                    </button>
-                  </Link>
-                </motion.div>
-              ))
+                )}
+              </div>
             ) : (
-              renderNoResults()
+              <div className="flex justify-center items-center">
+                {renderComingSoon(activeTab)}
+              </div>
             )}
           </div>
-        ) : (
-          renderComingSoon(activeTab)
-        )}
-      </main>
+        </div>
+      </div>
 
-      {/* Disconnect popup - Made responsive */}
+      {/* Disconnect popup */}
       {showDisconnectPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <div className="bg-blue-900 border-2 border-black p-4 sm:p-6 rounded-lg shadow-lg text-white w-full max-w-xs sm:w-80">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="bg-blue-900 border-2 border-black p-6 rounded-lg shadow-lg text-white w-full max-w-xs"
+          >
             <h2 className="text-xl font-bold mb-4 text-yellow-300">Disconnect Wallet?</h2>
             <div className="flex justify-between gap-4">
               <button 
@@ -213,7 +560,7 @@ export default function HomePage() {
                 Disconnect
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <div className="bg-green-100 min-h-screen flex justify-center items-center">
-      <div className="bg-blue-500 border-4 border-black p-8 rounded-lg">
+      <div className="bg-blue-500 border-4 border-black p-6 rounded-lg">
         {showDeployNFT ? (
           <DeployNFT /> // Show the DeployNFT page if the state is true
         ) : showHomepage ? (
