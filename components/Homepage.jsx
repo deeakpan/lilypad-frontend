@@ -10,17 +10,20 @@ import {
   FaHeart, FaAward, FaStar, FaBookmark, FaGift
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { connectWallet, getWalletAddress, disconnectWallet } from "../walletConnect";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { pepeUnchained, switchToPepeUnchained } from "../walletConnect";
+import { useAccount } from 'wagmi';
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("Newest");
   const [activeCategory, setActiveCategory] = useState("explore");
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [walletAddress, setWalletAddress] = useState(null);
-  const [showDisconnectPopup, setShowDisconnectPopup] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
+
+  // Use wagmi hook for wallet connection
+  const { address } = useAccount();
 
   // Use React Query for fetching collections
   const { data: collections = [], isLoading } = useQuery({
@@ -28,14 +31,12 @@ export default function HomePage() {
     queryFn: fetchCollections
   });
 
-  // Use React Query for wallet address
-  const { data: savedWalletAddress } = useQuery({
-    queryKey: ['walletAddress'],
-    queryFn: getWalletAddress,
-    onSuccess: (address) => {
-      if (address) setWalletAddress(address);
+  // Effect to switch to Pepe Unchained when address changes
+  useEffect(() => {
+    if (address) {
+      switchToPepeUnchained();
     }
-  });
+  }, [address]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -70,23 +71,6 @@ export default function HomePage() {
     };
   }, [sidebarOpen, desktopSidebarOpen]);
 
-  const handleWalletConnect = async () => {
-    if (walletAddress) {
-      setShowDisconnectPopup(true);
-    } else {
-      const address = await connectWallet();
-      if (address) {
-        setWalletAddress(address);
-      }
-    }
-  };
-
-  const handleDisconnect = async () => {
-    await disconnectWallet();
-    setWalletAddress(null);
-    setShowDisconnectPopup(false);
-  };
-
   const toggleSearchBar = () => {
     setSearchVisible(!searchVisible);
   };
@@ -101,6 +85,145 @@ export default function HomePage() {
 
   const filteredCollections = collections.filter(collection =>
     collection.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Custom styled RainbowKit Connect Button
+  const CustomConnectButton = () => (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        mounted,
+      }) => {
+        const ready = mounted;
+        const connected = ready && account && chain;
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span>Connect Wallet</span>
+                  </button>
+                );
+              }
+
+              if (chain.unsupported || chain.id !== pepeUnchained.id) {
+                return (
+                  <button
+                    onClick={openChainModal}
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400"
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span>Wrong Network</span>
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  onClick={openAccountModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                >
+                  <FaWallet className="w-4 h-4" />
+                  <span>
+                    {account.displayName}
+                    {account.displayBalance ? ` (${account.displayBalance})` : ''}
+                  </span>
+                </button>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
+  );
+
+  // Mobile version of custom connect button - FIXED VERSION
+  const MobileConnectButton = () => (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        mounted,
+      }) => {
+        const ready = mounted;
+        const connected = ready && account && chain;
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    className="flex items-center gap-1 px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                    style={{
+                      // Ensure the modal opens with full wallet options
+                      WebkitAppearance: 'none'
+                    }}
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span className="text-sm">Connect</span>
+                  </button>
+                );
+              }
+
+              if (chain.unsupported || chain.id !== pepeUnchained.id) {
+                return (
+                  <button
+                    onClick={openChainModal}
+                    className="flex items-center gap-1 px-3 py-1 bg-yellow-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400"
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span className="text-sm">Switch</span>
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  onClick={openAccountModal}
+                  className="flex items-center gap-1 px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                >
+                  <FaWallet className="w-4 h-4" />
+                  <span className="text-sm">{account.displayName.slice(0, 6) + "..."}</span>
+                </button>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
   );
 
   // Improved "Coming Soon" UI
@@ -277,13 +400,8 @@ export default function HomePage() {
               <button onClick={toggleSearchBar} className="text-white">
                 <FaSearch className="w-5 h-5" />
               </button>
-              <button 
-                onClick={handleWalletConnect} 
-                className="flex items-center gap-1 px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
-              >
-                <FaWallet className="w-4 h-4" />
-                <span className="text-sm">{walletAddress ? walletAddress.slice(0, 6) + "..." : "Connect"}</span>
-              </button>
+              {/* Use the fixed mobile connect button */}
+              <MobileConnectButton />
             </div>
           </div>
 
@@ -329,13 +447,7 @@ export default function HomePage() {
                 ))}
               </div>
               
-              <button 
-                onClick={handleWalletConnect} 
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
-              >
-                <FaWallet className="w-4 h-4" />
-                <span>{walletAddress ? walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4) : "Connect Wallet"}</span>
-              </button>
+              <CustomConnectButton />
             </div>
           </div>
           
@@ -534,35 +646,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Disconnect popup */}
-      {showDisconnectPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-blue-900 border-2 border-black p-6 rounded-lg shadow-lg text-white w-full max-w-xs"
-          >
-            <h2 className="text-xl font-bold mb-4 text-yellow-300">Disconnect Wallet?</h2>
-            <div className="flex justify-between gap-4">
-              <button 
-                onClick={() => setShowDisconnectPopup(false)} 
-                className="flex-1 px-4 py-2 bg-green-500 border-black border-2 rounded-md hover:bg-green-400 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleDisconnect} 
-                className="flex-1 px-4 py-2 bg-red-500 text-white border-black border-2 rounded-md font-bold hover:bg-red-400 transition-colors"
-              >
-                Disconnect
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 }

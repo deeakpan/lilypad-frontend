@@ -12,21 +12,21 @@
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.0.18",
     "@metamask/detect-provider": "^2.0.0",
+    "@rainbow-me/rainbowkit": "^2.2.4",
     "@supabase/supabase-js": "^2.49.1",
-    "@thirdweb-dev/react": "^4.9.4",
-    "@thirdweb-dev/sdk": "^4.0.99",
+    "@tanstack/react-query": "^5.73.3",
     "@walletconnect/client": "^1.8.0",
     "dotenv": "^16.4.7",
     "ethers": "^5.8.0",
     "express": "^5.1.0",
-    "firebase": "^11.4.0",
     "framer-motion": "^12.6.2",
     "lucide-react": "^0.483.0",
     "next": "^15.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "viem": "^2.23.13"
+    "viem": "^2.23.13",
+    "wagmi": "^2.14.16"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.14",
@@ -35,8 +35,5 @@
     "eslint-config-next": "latest",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17"
-  },
-  "overrides": {
-    "@tanstack/react-query": "^5.71.10"
   }
 }

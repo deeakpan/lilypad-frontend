@@ -1,82 +1,82 @@
-import { ethers } from "ethers";
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { metaMaskWallet } from '@rainbow-me/rainbowkit/wallets';
+import { http, createConfig } from 'wagmi';
 
-const WALLET_KEY = "connectedWallet";
 
-// Check if MetaMask is available
-const isMetaMaskAvailable = () => {
-  return typeof window.ethereum !== "undefined" && window.ethereum.isMetaMask;
+// Define the Pepe Unchained chain
+export const pepeUnchained = {
+  id: 3409,
+  name: 'Pepe Unchained',
+  network: 'pepe',
+  nativeCurrency: {
+    name: 'PEPU',
+    symbol: 'PEPU',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: { http: ['https://3409.rpc.thirdweb.com'] },
+  },
+  blockExplorers: {
+    default: { 
+      name: 'Pepe Unchained Explorer', 
+      url: 'https://explorer-pepe-unchained-gupg0lo9wf.t.conduit.xyz/' 
+    },
+  },
 };
 
-// Connect to the wallet and retrieve address
-export const connectWallet = async () => {
-  if (!isMetaMaskAvailable()) {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      // Open MetaMask mobile deep link to handle mobile interaction
-      window.open("https://metamask.app.link/dapp/" + window.location.host, "_blank");
-      return new Promise(resolve => {
-        // Since on mobile MetaMask doesn’t always immediately return the address,
-        // we need to keep trying until we get the address.
-        const interval = setInterval(async () => {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const accounts = await provider.listAccounts();
-          if (accounts.length > 0) {
-            clearInterval(interval);
-            localStorage.setItem(WALLET_KEY, accounts[0]);
-            resolve(accounts[0]);
-          }
-        }, 1000); // Retry every second
+// Configure project ID
+const projectId = 'd0b2dab20e3667281d013129f7f38720';
+
+// Create wagmi config with the Pepe chain
+export const config = createConfig({
+  chains: [pepeUnchained],
+  transports: {
+    [pepeUnchained.id]: http('https://3409.rpc.thirdweb.com'),
+  },
+});
+
+// Set up wallets (only MetaMask)
+export const wallets = [
+  metaMaskWallet({ projectId }),
+];
+
+// Function to add Pepe Unchained network to MetaMask
+export const addPepeUnchainedToMetaMask = async () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: `0x${pepeUnchained.id.toString(16)}`,
+          chainName: pepeUnchained.name,
+          nativeCurrency: pepeUnchained.nativeCurrency,
+          rpcUrls: [pepeUnchained.rpcUrls.default.http[0]],
+          blockExplorerUrls: [pepeUnchained.blockExplorers.default.url],
+        }],
       });
-    } else {
-      alert("Please install MetaMask to continue.");
-      return null;
+      console.log('Pepe Unchained network has been added to MetaMask');
+    } catch (error) {
+      console.error('Failed to add Pepe Unchained network to MetaMask:', error);
     }
   }
-
-  try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    
-    const signer = provider.getSigner();
-    const walletAddress = await signer.getAddress();
-
-    localStorage.setItem(WALLET_KEY, walletAddress);
-    return walletAddress;
-  } catch (error) {
-    console.error("Error connecting wallet:", error);
-    return null;
-  }
 };
 
-// Retrieve saved wallet address from local storage
-export const getSavedWallet = () => {
-  return localStorage.getItem(WALLET_KEY);
-};
-
-// Get wallet address from local storage or request new address
-export const getWalletAddress = async () => {
-  const savedWallet = getSavedWallet();
-  if (savedWallet) {
-    return savedWallet;
+// Function to switch to Pepe Unchained network
+export const switchToPepeUnchained = async () => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${pepeUnchained.id.toString(16)}` }],
+      });
+      console.log('Switched to Pepe Unchained network');
+    } catch (error) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (error.code === 4902) {
+        await addPepeUnchainedToMetaMask();
+      } else {
+        console.error('Failed to switch to Pepe Unchained network:', error);
+      }
+    }
   }
-
-  if (!isMetaMaskAvailable()) {
-    console.error("MetaMask is not installed.");
-    return null;
-  }
-
-  try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const accounts = await provider.listAccounts();
-    return accounts[0] || null;
-  } catch (error) {
-    console.error("Error retrieving wallet address:", error);
-    return null;
-  }
-};
-
-// Disconnect the wallet and clear local storage
-export const disconnectWallet = async () => {
-  localStorage.removeItem(WALLET_KEY);
-  sessionStorage.clear();
 };
