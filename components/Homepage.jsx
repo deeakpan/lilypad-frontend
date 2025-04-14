@@ -394,8 +394,18 @@ export default function HomePage() {
               >
                 {sidebarOpen ? <FaTimes className="w-6 h-6" /> : <FaBars className="w-6 h-6" />}
               </button>
-              <h1 className="text-2xl font-extrabold tracking-wide text-yellow-300">🌿 LilyPad</h1>
+
+              {/* Replaced 🌿 emoji with image */}
+              <div className="flex items-center space-x-0.7">
+                <img 
+                  src="/lilypad_homepage-removebg-preview.png" 
+                  alt="LilyPad Logo" 
+                  className="rounded-full object-cover w-[45px] h-[45px]"
+                />
+                <h1 className="text-2xl font-extrabold tracking-wide text-yellow-300">LilyPad</h1>
+              </div>
             </div>
+
             <div className="flex items-center space-x-3">
               <button onClick={toggleSearchBar} className="text-white">
                 <FaSearch className="w-5 h-5" />
@@ -415,8 +425,17 @@ export default function HomePage() {
               >
                 <FaBars className="w-6 h-6" />
               </button>
-              <h1 className="text-3xl font-extrabold tracking-wide text-yellow-300">🌿 LilyPad</h1>
               
+              {/* Logo Image and Text */}
+              <div className="flex items-center space-x-0.8">
+                <img 
+                  src="/lilypad_homepage-removebg-preview.png" 
+                  alt="LilyPad Logo" 
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+                <h1 className="text-3xl font-extrabold tracking-wide text-yellow-300">LilyPad</h1>
+              </div>
+
               {/* Search Bar - Now after branding with rounded edges */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -450,6 +469,7 @@ export default function HomePage() {
               <CustomConnectButton />
             </div>
           </div>
+
           
           {/* Mobile Search Bar */}
           {searchVisible && (
@@ -557,7 +577,7 @@ export default function HomePage() {
       <div className="bg-dark-green min-h-screen" style={{ paddingTop: "calc(4rem + 48px)" }}>
         <div className="w-full bg-blue-500 min-h-screen">
           <div 
-            className={`max-w-7xl mx-auto px-4 py-6 transition-all duration-300 ${sidebarOpen ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}
+            className={`max-w-7xl mx-auto px-17 py-6 transition-all duration-300 ${sidebarOpen ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}
           >
             {isLoading ? (
               <div className="flex justify-center items-center h-64">
@@ -605,7 +625,7 @@ export default function HomePage() {
                         </div>
                         
                         {/* Mobile - Compact layout */}
-                        <div className="lg:hidden grid grid-cols-2 gap-x-1 gap-y-0.5 mt-1.5">
+                        <div className="lg:hidden grid grid-cols-2 gap-x-6 gap-y-0.5 mt-1.5">
                           <div>
                             <span className="text-xs font-semibold text-gray-600">Items:</span>
                             <span className="text-xs ml-1">{collection.items}</span>
@@ -625,7 +645,7 @@ export default function HomePage() {
                         </div>
                         
                         <Link href={`/collection/${collection.id}`} className="block mt-3">
-                          <button className="w-full px-2 py-1.5 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors text-sm">
+                          <button className="w-full px-2.5 py-1.5 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400 transition-colors text-sm">
                             View
                           </button>
                         </Link>

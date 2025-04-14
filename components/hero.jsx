@@ -5,7 +5,7 @@ export default function Hero({ onExplore }) {
     <div className="bg-dusty-green min-h-screen flex justify-center items-center py-6 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md sm:max-w-lg bg-white p-4 sm:p-6 rounded-lg border-2 border-black flex flex-col items-center text-center">
         <Image
-          src="/pepu2.jpg"
+          src="/lilypad_hero.jpg"
           alt="PePu NFT Launchpad"
           width={96}
           height={96}
