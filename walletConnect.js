@@ -5,10 +5,10 @@ import {
 } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 
-// Define the Pepe Unchained chain
+// Define the Pepe Unchained Testnet chain
 export const pepeUnchained = {
-  id: 3409,
-  name: 'Pepe Unchained',
+  id: 20314,
+  name: 'PEPU Testnet',
   network: 'pepe',
   nativeCurrency: {
     name: 'PEPU',
@@ -16,12 +16,12 @@ export const pepeUnchained = {
     decimals: 18,
   },
   rpcUrls: {
-    default: { http: ['https://3409.rpc.thirdweb.com'] },
+    default: { http: ['https://rpc-pepe-unchained-test-ypyaeq1krb.t.conduit.xyz'] },
   },
   blockExplorers: {
     default: {
       name: 'Pepe Unchained Explorer',
-      url: 'https://explorer-pepe-unchained-gupg0lo9wf.t.conduit.xyz/',
+      url: 'https://explorer-pepe-unchained-test-ypyaeq1krb.t.conduit.xyz/',
     },
   },
   iconUrl: 'https://raw.githubusercontent.com/base-org/brand-kit/001c0e9b40a67799ebe0418671ac4e02a0c683ce/logo/in-use/icon/base-logo.svg',
@@ -68,9 +68,9 @@ export const addPepeUnchainedToMetaMask = async () => {
           blockExplorerUrls: [pepeUnchained.blockExplorers.default.url],
         }],
       });
-      console.log('Pepe Unchained network has been added to MetaMask');
+      console.log('PEPU Testnet network has been added to MetaMask');
     } catch (error) {
-      console.error('Failed to add Pepe Unchained network to MetaMask:', error);
+      console.error('Failed to add PEPU Testnet network to MetaMask:', error);
     }
   }
 };
@@ -83,12 +83,12 @@ export const switchToPepeUnchained = async () => {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: `0x${pepeUnchained.id.toString(16)}` }],
       });
-      console.log('Switched to Pepe Unchained network');
+      console.log('Switched to PEPU Testnet network');
     } catch (error) {
       if (error.code === 4902) {
         await addPepeUnchainedToMetaMask();
       } else {
-        console.error('Failed to switch to Pepe Unchained network:', error);
+        console.error('Failed to switch to PEPU Testnet network:', error);
       }
     }
   }

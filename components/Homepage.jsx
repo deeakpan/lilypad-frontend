@@ -140,12 +140,12 @@ export default function HomePage() {
               return (
                 <button
                   onClick={openAccountModal}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                  className="flex items-center gap-2 px-3 py-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
                 >
                   <FaWallet className="w-4 h-4" />
                   <span>
                     {account.displayName}
-                    {account.displayBalance ? ` (${account.displayBalance})` : ''}
+                    
                   </span>
                 </button>
               );
