@@ -157,20 +157,34 @@ export default function DeployNFT() {
     }
   };
 
+  // Navigate to homepage function
+  const navigateToHomepage = () => {
+    router.push('/');
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-green-100 p-4 pt-16 pb-24 overflow-y-auto">
-      {/* Back Button with Icon */}
-      <Link href="/">
-        <button className="absolute top-4 left-4 text-black flex items-center space-x-2 bg-white hover:bg-green-200 px-3 py-2 rounded-full shadow-md border border-black">
-          <FaArrowLeft className="text-sm" />
-          <span className="text-sm hidden sm:inline">Back</span>
-        </button>
-      </Link>
+      {/* Back Button with Icon - Updated to use router for homepage navigation */}
+      <button 
+        onClick={navigateToHomepage}
+        className="absolute top-4 left-4 text-black flex items-center space-x-2 bg-white hover:bg-green-200 px-3 py-2 rounded-full shadow-md border border-black"
+      >
+        <FaArrowLeft className="text-sm" />
+        <span className="text-sm hidden sm:inline">Back</span>
+      </button>
 
-      {/* Heading with Adjusted Margin */}
+      {/* Heading with Adjusted Margin and fixed rounded logo */}
       <div className="mb-6 flex flex-col items-center">
-        <Image src="/pepu2.jpg" alt="PEPU Logo" width={80} height={80} className="rounded-full mb-3" />
-        <h1 className="text-xl sm:text-2xl font-bold text-black text-center">
+        <div className="w-20 h-20 rounded-full overflow-hidden">
+          <Image 
+            src="/lilypad_hero.jpg" 
+            alt="PEPU Logo" 
+            width={80} 
+            height={80} 
+            className="w-full h-full rounded-full object-cover" 
+          />
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-black text-center mt-3">
           Deploy New NFT Collection
         </h1>
         <p className="text-sm sm:text-base text-gray-700 text-center mt-2 max-w-md">
@@ -369,7 +383,7 @@ export default function DeployNFT() {
         )}
       </AnimatePresence>
 
-      {/* Success Popup */}
+      {/* Success Popup - Updated close button to navigate to homepage */}
       <AnimatePresence>
         {showSuccessPopup && collectionData && (
           <motion.div 
@@ -476,7 +490,7 @@ export default function DeployNFT() {
                     whileTap={{ scale: 0.98 }}
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1, transition: { delay: 0.9 } }}
-                    onClick={() => setShowSuccessPopup(false)}
+                    onClick={navigateToHomepage}
                     className="w-full py-2 bg-transparent text-gray-700 hover:bg-gray-100 rounded-md font-medium"
                   >
                     Close

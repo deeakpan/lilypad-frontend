@@ -16,11 +16,11 @@ export default function Hero({ onExplore }) {
         </div>
         
         <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold mb-3 sm:mb-4 text-blue-900">
-          LilyPad - The First NFT Launchpad on PePuChain
+          LilyPad - The First NFT Launchpad on PePe Unchained L2
         </h1>
         
         <p className="text-base sm:text-lg mb-5 sm:mb-7 text-gray-700 max-w-md">
-          Welcome to LilyPad, the premier NFT launchpad on PePuChain! Create, mint, and trade NFTs seamlessly with our powerful platform.
+          Welcome to LilyPad, the premier NFT launchpad on the PEPU Network! Create, mint, and trade NFTs seamlessly with our powerful platform.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto sm:justify-center">
