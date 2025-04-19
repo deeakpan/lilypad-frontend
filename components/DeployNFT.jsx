@@ -5,8 +5,11 @@ import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FaArrowLeft, FaTimes, FaCheck, FaImage, FaInfoCircle } from "react-icons/fa";
+import { FaArrowLeft, FaTimes, FaCheck, FaImage, FaInfoCircle, FaWallet } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from 'wagmi';
+import { pepeUnchained, switchToPepeUnchained } from "../walletConnect";
 
 // Initialize Supabase
 const supabase = createClient(
@@ -27,8 +30,12 @@ export default function DeployNFT() {
   const [isDeploying, setIsDeploying] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [collectionData, setCollectionData] = useState(null);
   const formRef = useRef(null);
+
+  // Use wagmi hook for wallet connection
+  const { address, isConnected } = useAccount();
 
   useEffect(() => {
     // Focus on the form container to ensure it stays in view when keyboard appears
@@ -51,6 +58,13 @@ export default function DeployNFT() {
       });
     };
   }, []);
+
+  // Effect to switch to Pepe Unchained when address changes
+  useEffect(() => {
+    if (address) {
+      switchToPepeUnchained();
+    }
+  }, [address]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,6 +108,10 @@ export default function DeployNFT() {
 
   const handleDeploy = async () => {
     if (!isFormValid) return;
+    if (!isConnected) {
+      setShowWalletModal(true);
+      return;
+    }
     setIsDeploying(true);
 
     const fileExt = formData.image.name.split(".").pop();
@@ -112,6 +130,7 @@ export default function DeployNFT() {
 
     const imageUrl = `https://anfgdvhvikwdfqiigzkp.supabase.co/storage/v1/object/public/nft-images/public/${fileName}`;
 
+    // Add creator_wallet to the data being inserted
     const { data, error } = await supabase
       .from("nft_collections")
       .insert([
@@ -124,6 +143,7 @@ export default function DeployNFT() {
           floor_price: formData.floorPrice,
           volume: 0,
           category: "newest",
+          creator_wallet: address, // Store the connected wallet address
         },
       ])
       .select("id")
@@ -143,6 +163,7 @@ export default function DeployNFT() {
       description: formData.description,
       items: formData.items,
       floorPrice: formData.floorPrice,
+      creator_wallet: address, // Include creator wallet in collection data
     });
 
     setShowConfirmModal(false);
@@ -153,7 +174,11 @@ export default function DeployNFT() {
 
   const handleSubmitForm = () => {
     if (isFormValid) {
-      setShowConfirmModal(true);
+      if (!isConnected) {
+        setShowWalletModal(true);
+      } else {
+        setShowConfirmModal(true);
+      }
     }
   };
 
@@ -161,6 +186,72 @@ export default function DeployNFT() {
   const navigateToHomepage = () => {
     router.push('/');
   };
+
+  // Custom RainbowKit Connect Button for modal
+  const CustomConnectButton = () => (
+    <ConnectButton.Custom>
+      {({
+        account,
+        chain,
+        openAccountModal,
+        openChainModal,
+        openConnectModal,
+        mounted,
+      }) => {
+        const ready = mounted;
+        const connected = ready && account && chain;
+
+        return (
+          <div
+            {...(!ready && {
+              'aria-hidden': true,
+              style: {
+                opacity: 0,
+                pointerEvents: 'none',
+                userSelect: 'none',
+              },
+            })}
+          >
+            {(() => {
+              if (!connected) {
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    className="w-full py-3 flex items-center justify-center gap-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span>Connect Wallet</span>
+                  </button>
+                );
+              }
+
+              if (chain.unsupported || chain.id !== pepeUnchained.id) {
+                return (
+                  <button
+                    onClick={openChainModal}
+                    className="w-full py-3 flex items-center justify-center gap-2 bg-yellow-500 text-black border-2 border-black rounded-md font-bold hover:bg-yellow-400"
+                  >
+                    <FaWallet className="w-4 h-4" />
+                    <span>Wrong Network</span>
+                  </button>
+                );
+              }
+
+              return (
+                <button
+                  onClick={openAccountModal}
+                  className="w-full py-3 flex items-center justify-center gap-2 bg-green-500 text-black border-2 border-black rounded-md font-bold hover:bg-green-400"
+                >
+                  <FaWallet className="w-4 h-4" />
+                  <span>{account.displayName}</span>
+                </button>
+              );
+            })()}
+          </div>
+        );
+      }}
+    </ConnectButton.Custom>
+  );
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-green-100 p-4 pt-16 pb-24 overflow-y-auto">
@@ -190,6 +281,24 @@ export default function DeployNFT() {
         <p className="text-sm sm:text-base text-gray-700 text-center mt-2 max-w-md">
           Fill in the details below to deploy your NFT collection on the LilyPad platform.
         </p>
+      </div>
+
+      {/* Wallet Connection Status */}
+      <div className="w-full max-w-lg mb-4 flex justify-end">
+        {isConnected ? (
+          <div className="flex items-center gap-2 px-3 py-1 bg-green-500 text-black border-2 border-black rounded-md font-bold">
+            <FaWallet className="w-4 h-4" />
+            <span className="text-sm">{address.slice(0, 6)}...{address.slice(-4)}</span>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setShowWalletModal(true)}
+            className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white border-2 border-black rounded-md font-bold hover:bg-blue-600"
+          >
+            <FaWallet className="w-4 h-4" />
+            <span className="text-sm">Connect Wallet</span>
+          </button>
+        )}
       </div>
 
       <div ref={formRef} className="w-full max-w-lg">
@@ -291,7 +400,53 @@ export default function DeployNFT() {
         </motion.div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Wallet Connection Modal */}
+      <AnimatePresence>
+        {showWalletModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg shadow-xl border-4 border-blue-500 w-full max-w-md mx-auto"
+            >
+              <div className="bg-blue-500 p-3 sm:p-4 flex justify-between items-center border-b-2 border-black">
+                <h3 className="text-lg sm:text-xl font-bold text-white">Connect Wallet</h3>
+                <button 
+                  onClick={() => setShowWalletModal(false)}
+                  className="text-white hover:text-red-200"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              
+              <div className="p-4 sm:p-6">
+                <div className="text-center mb-4">
+                  <FaWallet className="mx-auto text-blue-500 text-3xl mb-3" />
+                  <h4 className="text-lg font-bold mb-2">Wallet Connection Required</h4>
+                  <p className="text-gray-600 mb-4">Please connect your wallet to deploy your NFT collection on the LilyPad platform.</p>
+                </div>
+                
+                <CustomConnectButton />
+                
+                <button
+                  onClick={() => setShowWalletModal(false)}
+                  className="w-full py-2 mt-3 bg-gray-200 text-black font-bold border-2 border-black rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Modal - Updated to show wallet info */}
       <AnimatePresence>
         {showConfirmModal && (
           <motion.div 
@@ -347,6 +502,15 @@ export default function DeployNFT() {
                   </div>
                 </div>
                 
+                {/* Wallet information section */}
+                <div className="border-t border-gray-200 pt-3 mb-3">
+                  <p className="text-xs text-gray-500 font-medium">CREATOR WALLET</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <FaWallet className="text-green-500" />
+                    <p className="text-sm font-semibold">{address.slice(0, 6)}...{address.slice(-4)}</p>
+                  </div>
+                </div>
+                
                 <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4">
                   <button
                     onClick={() => setShowConfirmModal(false)}
@@ -383,7 +547,7 @@ export default function DeployNFT() {
         )}
       </AnimatePresence>
 
-      {/* Success Popup - Updated close button to navigate to homepage */}
+      {/* Success Popup - Updated to show creator wallet info */}
       <AnimatePresence>
         {showSuccessPopup && collectionData && (
           <motion.div 
@@ -469,6 +633,18 @@ export default function DeployNFT() {
                         <p className="text-sm font-semibold">{collectionData.floorPrice} PEPU</p>
                       </div>
                     </motion.div>
+                    
+                    {/* Add creator wallet to success popup */}
+                    <motion.div
+                      initial={{ x: 20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1, transition: { delay: 0.8 } }}
+                    >
+                      <p className="text-xs text-gray-500 font-medium">CREATOR WALLET</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <FaWallet className="text-green-500 w-3 h-3" />
+                        <p className="text-sm font-mono">{collectionData.creator_wallet.slice(0, 6)}...{collectionData.creator_wallet.slice(-4)}</p>
+                      </div>
+                    </motion.div>
                   </div>
                 </div>
                 
@@ -478,7 +654,7 @@ export default function DeployNFT() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1, transition: { delay: 0.8 } }}
+                      animate={{ y: 0, opacity: 1, transition: { delay: 0.9 } }}
                       className="w-full py-3 bg-blue-500 text-white px-4 rounded-md border-2 border-black hover:bg-blue-600 font-bold"
                     >
                       View Collection
@@ -489,7 +665,7 @@ export default function DeployNFT() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1, transition: { delay: 0.9 } }}
+                    animate={{ y: 0, opacity: 1, transition: { delay: 1.0 } }}
                     onClick={navigateToHomepage}
                     className="w-full py-2 bg-transparent text-gray-700 hover:bg-gray-100 rounded-md font-medium"
                   >

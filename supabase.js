@@ -15,4 +15,18 @@ export const fetchCollections = async () => {
   return data || [];
 };
 
+// Function to fetch collections by creator wallet address
+export const fetchCollectionsByCreator = async (walletAddress) => {
+  const { data, error } = await supabase
+    .from("nft_collections")
+    .select("*")
+    .eq("creator_wallet", walletAddress);
+  
+  if (error) {
+    console.error("Error fetching collections by creator:", error);
+    return [];
+  }
+  return data || [];
+};
+
 export default supabase;
