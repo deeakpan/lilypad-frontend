@@ -184,7 +184,7 @@ export default function DeployNFT() {
 
   // Navigate to homepage function
   const navigateToHomepage = () => {
-    router.push('/');
+    router.push('/Launchpad');
   };
 
   // Custom RainbowKit Connect Button for modal

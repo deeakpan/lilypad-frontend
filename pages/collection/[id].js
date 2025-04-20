@@ -18,8 +18,6 @@ export default function CollectionPage() {
   useEffect(() => {
     if (!id) return;
 
-    console.log("Received Collection ID:", id); // Debugging
-
     const fetchCollection = async () => {
       const { data, error } = await supabase
         .from("nft_collections")
@@ -30,7 +28,6 @@ export default function CollectionPage() {
       if (error) {
         console.error("Error fetching collection:", error);
       } else {
-        console.log("Fetched Collection Data:", data); // Debugging
         setCollection(data);
       }
       setLoading(false);
@@ -39,72 +36,85 @@ export default function CollectionPage() {
     fetchCollection();
   }, [id]);
 
-  if (loading) return <p className="text-lg font-bold">Loading collection...</p>;
-  if (!collection) return <p className="text-lg font-bold">Collection not found.</p>;
+  if (loading) return <div className="p-4 text-lg font-bold text-center">Loading collection...</div>;
+  if (!collection) return <div className="p-4 text-lg font-bold text-center">Collection not found.</div>;
 
   return (
-    <div className="p-6 min-h-screen bg-green-100 text-white flex justify-center items-center">
-      <div className="p-6 border-2 border-black bg-blue-500 rounded-lg max-w-3xl w-full">
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-md mb-4" onClick={() => router.back()}>
-          ← Back
-        </button>
+    <div className="bg-green-100 min-h-screen p-4 md:py-8">
+      <div className="max-w-md md:max-w-2xl mx-auto bg-blue-500 border-4 border-black rounded-lg overflow-hidden">
+        {/* Header */}
+        <div className="p-4">
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md mb-4" 
+            onClick={() => router.back()}
+          >
+            ← Back
+          </button>
 
-        <h1 className="text-3xl font-bold text-center mb-2">{collection.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-white mb-2">{collection.name}</h1>
 
-        {/* Updated Image */}
-        <img 
-          src={collection.image_url || "/placeholder.jpg"} 
-          alt={collection.name} 
-          className="w-36 h-36 mx-auto object-cover rounded-md"
-        />
+          {/* Collection Image - Smaller on mobile, larger on desktop */}
+          <div className="flex justify-center">
+            <img 
+              src={collection.image_url || "/placeholder.jpg"} 
+              alt={collection.name} 
+              className="w-28 h-28 md:w-36 md:h-36 object-cover rounded-md"
+            />
+          </div>
 
-        {/* Website Badge */}
-        <div className="mt-2 flex justify-center">
-          <p className="px-3 py-1 bg-gray-500 text-white rounded-full text-sm font-semibold border border-black">
-          https://lilypad-mint.netlify.app/
-          </p>
+          {/* Website Badge */}
+          <div className="mt-2 flex justify-center">
+            <p className="px-3 py-1 bg-gray-500 text-white rounded-full text-xs md:text-sm font-semibold border border-black">
+              https://lilypad-mint.netlify.app/
+            </p>
+          </div>
+
+          {/* Description - Limit height on mobile */}
+          <div className="mt-3 text-center text-white max-h-24 md:max-h-full overflow-y-auto">
+            <p>{collection.description}</p>
+          </div>
         </div>
 
-        <p className="text-center text-white mt-2">{collection.description}</p>
-
         {/* Info Container */}
-        <div className="grid grid-cols-2 gap-4 bg-white border-2 border-green-700 text-black p-4 rounded-lg mt-4">
+        <div className="mx-4 mb-4 grid grid-cols-2 gap-3 bg-white border-2 border-green-700 text-black p-3 rounded-lg">
           <div className="text-center">
-            <p className="font-bold">Floor Price</p>
-            <p>{collection.floor_price} PEPU</p>
+            <p className="font-bold text-sm md:text-base">Floor Price</p>
+            <p className="text-sm md:text-base">{collection.floor_price} PEPU</p>
           </div>
           <div className="text-center">
-            <p className="font-bold">Volume</p>
-            <p>{collection.volume} PEPU</p>
+            <p className="font-bold text-sm md:text-base">Volume</p>
+            <p className="text-sm md:text-base">{collection.volume} PEPU</p>
           </div>
           <div className="text-center">
-            <p className="font-bold">Items</p>
-            <p>{collection.items}</p>
+            <p className="font-bold text-sm md:text-base">Items</p>
+            <p className="text-sm md:text-base">{collection.items}</p>
           </div>
           <div className="text-center">
-            <p className="font-bold">Holders</p>
-            <p>{collection.minters}</p>
+            <p className="font-bold text-sm md:text-base">Holders</p>
+            <p className="text-sm md:text-base">{collection.minters}</p>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-6">
-          <p className="font-bold text-center">Mint Progress:</p>
-          <div className="w-full bg-gray-300 rounded-full h-6 relative">
+        <div className="mx-4 mb-4">
+          <p className="font-bold text-center text-white text-sm md:text-base">Mint Progress:</p>
+          <div className="w-full bg-gray-300 rounded-full h-4 md:h-6 relative">
             <div
-              className="bg-green-500 h-6 rounded-full absolute top-0 left-0"
+              className="bg-green-500 h-4 md:h-6 rounded-full absolute top-0 left-0"
               style={{ width: `${(collection.minted / collection.items) * 100 || 0}%` }}
             ></div>
           </div>
-          <p className="text-center mt-2">
+          <p className="text-center mt-1 text-white text-xs md:text-sm">
             {collection.minted} / {collection.items} Minted ({((collection.minted / collection.items) * 100).toFixed(2) || 0}%)
           </p>
         </div>
 
-        {/* Mint Button with Hover Animation */}
-        <button className="mt-4 w-full bg-green-500 border-2 border-black text-white py-3 rounded-md font-bold text-lg transition duration-300 ease-in-out hover:bg-green-700 hover:scale-105">
-          Mint NFT
-        </button>
+        {/* Mint Button */}
+        <div className="p-4 pt-0">
+          <button className="w-full bg-green-500 border-2 border-black text-white py-2 md:py-3 rounded-md font-bold text-base md:text-lg transition duration-300 ease-in-out hover:bg-green-700 hover:scale-105">
+            Mint NFT
+          </button>
+        </div>
       </div>
     </div>
   );

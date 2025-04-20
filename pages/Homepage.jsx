@@ -287,14 +287,14 @@ export default function HomePage() {
   // Define categories for sidebar and navigation
   const navigationCategories = {
     explore: [
-      { name: "Collections", icon: <FaLayerGroup className="w-5 h-5" />, path: "/", active: true },
+      { name: "Collections", icon: <FaLayerGroup className="w-5 h-5" />, path: "/Homepage", active: true },
       { name: "Stats", icon: <FaChartBar className="w-5 h-5" />, path: "/stats", active: false },
       { name: "Drops", icon: <FaGift className="w-5 h-5" />, path: "/drops", active: false },
       { name: "Marketplace", icon: <FaShoppingBag className="w-5 h-5" />, path: "/marketplace", active: false },
       { name: "Rankings", icon: <FaAward className="w-5 h-5" />, path: "/rankings", active: false },
     ],
     create: [
-      { name: "Launchpad", icon: <FaPlusCircle className="w-5 h-5" />, path: "/DeployNFT", active: true },
+      { name: "Launchpad", icon: <FaPlusCircle className="w-5 h-5" />, path: "/Launchpad", active: true },
       { name: "Create NFT", icon: <FaPlusCircle className="w-5 h-5" />, path: "/create-nft", active: false },
       { name: "My Collections", icon: <FaLayerGroup className="w-5 h-5" />, path: "/my-collections", active: false },
     ],
